@@ -133,6 +133,36 @@ def plot_poly_aprox(dates, cases, deads, saves):
     plt.savefig('aprox_poly.svg')
     # plt.show()
 
+def plot_diag_cerro(days):
+    dates = []
+    cases_cerro = []
+    cases_hav = []
+
+    for i in range(len(days)):
+        dates.append(days[str(i + 1)]['fecha'])
+        try:
+            temp = len(days[str(i + 1)]['diagnosticados'])
+            cases_hav.append(0)
+            cases_cerro.append(0)
+            for j in range(temp):
+                try:
+                    if(days[str(i + 1)]['diagnosticados'][j]['provincia_detección'] == provinces[2]):
+                        cases_hav[i] += 1
+                    if(days[str(i + 1)]['diagnosticados'][j]['municipio_detección'] == "Cerro"):
+                        cases_cerro[i] += 1
+                except:
+                    pass
+        except:
+            cases_cerro.append(0)
+            cases_hav.append(0)
+
+    plt.figure(figsize=(20, 7), dpi=80)
+    plt.plot(cases_hav, marker='o', label = 'casos informados en La Habana')
+    plt.plot(cases_cerro, marker='o', label = 'casos informados en el Cerro')
+    plt.xticks(range(len(cases_hav)), dates, rotation=90, size=8)
+    plt.legend()
+    plt.savefig('cases_per_day_cerro.svg')
+
 def plot_diag_havana(days):
     dates = []
     cases = []
@@ -155,7 +185,7 @@ def plot_diag_havana(days):
 
     plt.figure(figsize=(20, 7), dpi=80)
     plt.plot(cases, marker='o', label = 'casos informados en Cuba')
-    plt.plot(cases_hav, marker='o', label = 'casos informados en la Habana')
+    plt.plot(cases_hav, marker='o', label = 'casos informados en La Habana')
     plt.xticks(range(len(cases)), dates, rotation=90, size=8)
     plt.legend()
     plt.savefig('cases_per_day_hav.svg')
@@ -302,6 +332,7 @@ def main():
     
     print("WORKING")
     plot_diag_havana(days)
+    plot_diag_cerro(days)
     plot_acumulado(date, cases, deads, saves)
     # plot_aprox_exp(date, cases, deads, saves)
     # plot_poly_aprox(date, cases, deads, saves)
