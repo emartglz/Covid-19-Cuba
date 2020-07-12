@@ -13,6 +13,7 @@ import datetime
 import IPython.utils.colorable as colorr
 
 provinces = ["Pinar del Río", "Artemisa", "La Habana", "Mayabeque", "Matanzas", "Cienfuegos", "Ciego de Ávila", "Villa Clara", "Sancti Spíritus", "Camagüey", "Las Tunas", "Granma", "Guantánamo", "Santiago de Cuba", "Holguín", "Isla de la Juventud"]
+municipies = ['Diez de Octubre', 'Guanabacoa', 'Playa', 'Plaza de la Revolución', 'Boyeros', 'Centro Habana', 'Cotorro', 'Arroyo Naranjo', 'La Lisa', 'La Habana Vieja', 'San Miguel del Padrón', 'Cerro', 'Habana del Este', 'Marianao', 'Regla']
 
 def plot_saved_deads_found_per_day(dates, cases, deads, saves):
     plt.figure(figsize=(20, 7), dpi=80)
@@ -190,9 +191,9 @@ def plot_diag_havana(days):
     plt.legend()
     plt.savefig('cases_per_day_hav.svg')
 
-def find_province(province):
-    for i, p in enumerate(provinces):
-        if p == province:
+def find(array, x):
+    for i, p in enumerate(array):
+        if p == x:
             return i
 
 def daytime_trans(str):
@@ -228,10 +229,11 @@ def rgb_tp_prgb(r, g, b):
     temp = 1 / 255
     return [r * temp, g * temp, b * temp, 1]
 
-def animate_cases_provinces(days):
-    colors = [rgb_tp_prgb(8, 84, 57),rgb_tp_prgb(179, 0, 225),rgb_tp_prgb(29, 98, 171),rgb_tp_prgb(114, 180, 222),rgb_tp_prgb(6, 168, 65),rgb_tp_prgb(255, 0, 153),rgb_tp_prgb(248, 199, 28), rgb_tp_prgb(203, 74, 10),rgb_tp_prgb(243, 145, 0),rgb_tp_prgb(79, 0, 4),rgb_tp_prgb(0, 155, 83),rgb_tp_prgb(218, 37, 28),rgb_tp_prgb(17, 19, 20),rgb_tp_prgb(254, 50, 0),rgb_tp_prgb(0, 141, 217),rgb_tp_prgb(0, 165, 138)]
+colors = [rgb_tp_prgb(8, 84, 57),rgb_tp_prgb(179, 0, 225),rgb_tp_prgb(29, 98, 171),rgb_tp_prgb(114, 180, 222),rgb_tp_prgb(6, 168, 65),rgb_tp_prgb(255, 0, 153),rgb_tp_prgb(248, 199, 28), rgb_tp_prgb(203, 74, 10),rgb_tp_prgb(243, 145, 0),rgb_tp_prgb(79, 0, 4),rgb_tp_prgb(0, 155, 83),rgb_tp_prgb(218, 37, 28),rgb_tp_prgb(17, 19, 20),rgb_tp_prgb(254, 50, 0),rgb_tp_prgb(0, 141, 217),rgb_tp_prgb(0, 165, 138)]
     #provinces = ["Pinar del Río",   "Artemisa",            "La Habana",             "Mayabeque",                 "Matanzas",            "Cienfuegos",              "Ciego de Ávila",          "Villa Clara",              "Sancti Spíritus",     "Camagüey",            "Las Tunas",           "Granma",                "Guantánamo",          "Santiago de Cuba",    "Holguín",              "Isla de la Juventud"]
 
+
+def animate_cases_provinces(days):
     dates = []
     cases = [[0 for j in range(len(provinces))] for i in range(len(days))]
 
@@ -243,7 +245,7 @@ def animate_cases_provinces(days):
 
             for j in range(l):
                 try:
-                    cases[i][find_province(days[str(i + 1)]['diagnosticados'][j]['provincia_detección'])] += 1
+                    cases[i][find(provinces, days[str(i + 1)]['diagnosticados'][j]['provincia_detección'])] += 1
                 except:
                     pass
         except:
@@ -279,6 +281,58 @@ def animate_cases_provinces(days):
 
     anim = FuncAnimation(fig=fig, func=update, init_func=init, frames=len(df_expanded), interval=1000/30, repeat=False)
     anim.save('covid19 por provincias.mp4')
+    # plt.show()
+
+
+def animate_cases_havana(days):
+    dates = []
+    cases = [[0 for j in range(len(municipies))] for i in range(len(days))]
+
+    for i in range(len(days)):
+        
+        dates.append(daytime_trans(days[str(i + 1)]['fecha']))
+        try:
+            l = len(days[str(i + 1)]['diagnosticados'])
+
+            for j in range(l):
+                try:
+                    if days[str(i + 1)]['diagnosticados'][j]['provincia_detección'] == 'La Habana':
+                        cases[i][find(municipies, days[str(i + 1)]['diagnosticados'][j]['municipio_detección'])] += 1
+                except:
+                    pass
+        except:
+            pass
+        if i > 0:
+            for p in range(len(municipies)):
+                cases[i][p] += cases[i-1][p]
+        
+    df = pd.DataFrame(cases, dates, municipies)
+    df_expanded, df_rank_expanded = prepare_data(df, 25)
+
+    labels = df_expanded.columns
+
+    fig = plt.figure(figsize=(16, 8), dpi=144)
+    ax = fig.subplots()
+
+    def init():
+        ax.clear()
+        ax.set_xlim([0, 1])
+        nice_axes(ax)
+
+    def update(i):
+        init()
+        for bar in ax.containers:
+            bar.remove()
+        y = df_rank_expanded.iloc[i]
+        width = df_expanded.iloc[i]
+        ax.barh(y=y, width=width, color=colors, tick_label=labels, edgecolor=[1, 1, 1, 1])
+        for j in range(len(y)):
+            ax.text(width[j], y[j] - 0.15, str(int(width[j])), fontsize='smaller')
+        date_str = df_expanded.index[i].strftime('%B%-d, %Y')
+        ax.set_title(f'COVID-19 Total cases by municipies in Havana - {date_str}', fontsize='smaller')
+
+    anim = FuncAnimation(fig=fig, func=update, init_func=init, frames=len(df_expanded), interval=1000/30, repeat=False)
+    anim.save('covid19 por municipio en La Habana.mp4')
     # plt.show()
 
 def read_json(p):
@@ -341,7 +395,8 @@ def main():
     plot_dead_cases(date, deads)
     plot_safed_cases(date, saves)
     plot_saved_deads_found_per_day(date, cases, deads, saves)
-    animate_cases_provinces(days)
+    # animate_cases_provinces(days)
+    animate_cases_havana(days)
 
 if __name__ == '__main__':
     main()
