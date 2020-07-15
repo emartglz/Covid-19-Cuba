@@ -305,8 +305,8 @@ def animate_cases_havana(days):
         if i > 0:
             for p in range(len(municipies)):
                 cases[i][p] += cases[i-1][p]
-        
-    df = pd.DataFrame(cases, dates, municipies)
+
+    df = pd.DataFrame(cases[5:], dates[5:], municipies)
     df_expanded, df_rank_expanded = prepare_data(df, 25)
 
     labels = df_expanded.columns
@@ -316,7 +316,6 @@ def animate_cases_havana(days):
 
     def init():
         ax.clear()
-        ax.set_xlim([0, 1])
         nice_axes(ax)
 
     def update(i):
@@ -329,7 +328,7 @@ def animate_cases_havana(days):
         for j in range(len(y)):
             ax.text(width[j], y[j] - 0.15, str(int(width[j])), fontsize='smaller')
         date_str = df_expanded.index[i].strftime('%B%-d, %Y')
-        ax.set_title(f'COVID-19 Total cases by municipies in Havana - {date_str}', fontsize='smaller')
+        ax.set_title(f'COVID-19 Total cases by municipality in Havana - {date_str}', fontsize='smaller')
 
     anim = FuncAnimation(fig=fig, func=update, init_func=init, frames=len(df_expanded), interval=1000/30, repeat=False)
     anim.save('covid19 por municipio en La Habana.mp4')
@@ -395,7 +394,7 @@ def main():
     plot_dead_cases(date, deads)
     plot_safed_cases(date, saves)
     plot_saved_deads_found_per_day(date, cases, deads, saves)
-    # animate_cases_provinces(days)
+    animate_cases_provinces(days)
     animate_cases_havana(days)
 
 if __name__ == '__main__':
